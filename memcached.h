@@ -172,9 +172,6 @@ typedef struct {
 /* listening socket */
 extern int l_socket;
 
-/* udp socket */
-extern int u_socket;
-
 /* current time of day (updated periodically) */
 extern volatile rel_time_t current_time;
 
@@ -230,16 +227,15 @@ int slabs_reassign(unsigned char srcid, unsigned char dstid);
 
 /* event handling, network IO */
 void event_handler(int fd, short which, void *arg);
-conn *conn_new(int sfd, int init_state, int event_flags, int read_buffer_size, int is_udp);
+conn *conn_new(int sfd, int init_state, int event_flags, int read_buffer_size);
 void conn_close(conn *c);
 void conn_init(void);
 void drive_machine(conn *c);
-int new_socket(int isUdp);
-int server_socket(int port, int isUdp);
+int new_socket();
+int server_socket(int port);
 int update_event(conn *c, int new_flags);
 int try_read_command(conn *c);
 int try_read_network(conn *c);
-int try_read_udp(conn *c);
 void complete_nread(conn *c);
 void process_command(conn *c, char *command);
 int transmit(conn *c);

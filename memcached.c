@@ -173,8 +173,8 @@ void conn_init(void) {
     return;
 }
 
-conn *conn_new(int sfd, int init_state, int event_flags, int read_buffer_size,
-                int is_udp) {
+conn *conn_new(int sfd, int init_state, int event_flags, int read_buffer_size
+                ) {
     conn *c;
 
     /* do we have a free conn structure from a previous close? */
@@ -222,8 +222,6 @@ conn *conn_new(int sfd, int init_state, int event_flags, int read_buffer_size,
     if (settings.verbose > 1) {
         if (init_state == conn_listening)
             fprintf(stderr, "<%d server listening\n", sfd);
-        else if (is_udp)
-            fprintf(stderr, "<%d server listening (udp)\n", sfd);
         else
             fprintf(stderr, "<%d new client connection\n", sfd);
     }
@@ -1379,7 +1377,7 @@ void drive_machine(conn *c) {
                 break;
             }
             newc = conn_new(sfd, conn_read, EV_READ | EV_PERSIST,
-                            DATA_BUFFER_SIZE, 0);
+                            DATA_BUFFER_SIZE);
             if (!newc) {
                 if (settings.verbose > 0)
                     fprintf(stderr, "couldn't create new connection\n");
@@ -1579,11 +1577,11 @@ void event_handler(int fd, short which, void *arg) {
     return;
 }
 
-int new_socket(int is_udp) {
+int new_socket() {
     int sfd;
     int flags;
 
-    if ((sfd = socket(AF_INET, is_udp ? SOCK_DGRAM : SOCK_STREAM, 0)) == -1) {
+    if ((sfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         perror("socket()");
         return -1;
     }
@@ -1633,24 +1631,21 @@ void maximize_sndbuf(int sfd) {
 }
 
 
-int server_socket(int port, int is_udp) {
+int server_socket(int port) {
     int sfd;
     struct linger ling = {0, 0};
     struct sockaddr_in addr;
     int flags =1;
 
-    if ((sfd = new_socket(is_udp)) == -1) {
+    if ((sfd = new_socket()) == -1) {
         return -1;
     }
 
     setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &flags, sizeof(flags));
-    if (is_udp) {
-        maximize_sndbuf(sfd);
-    } else {
-        setsockopt(sfd, SOL_SOCKET, SO_KEEPALIVE, &flags, sizeof(flags));
-        setsockopt(sfd, SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));
-        setsockopt(sfd, IPPROTO_TCP, TCP_NODELAY, &flags, sizeof(flags));
-    }
+
+    setsockopt(sfd, SOL_SOCKET, SO_KEEPALIVE, &flags, sizeof(flags));
+    setsockopt(sfd, SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));
+    setsockopt(sfd, IPPROTO_TCP, TCP_NODELAY, &flags, sizeof(flags));
 
     /*
      * the memset call clears nonstandard fields in some impementations
@@ -1666,7 +1661,7 @@ int server_socket(int port, int is_udp) {
         close(sfd);
         return -1;
     }
-    if (! is_udp && listen(sfd, 1024) == -1) {
+    if (listen(sfd, 1024) == -1) {
         perror("listen()");
         close(sfd);
         return -1;
@@ -1877,7 +1872,6 @@ void remove_pidfile(char *pid_file) {
 }
 
 int l_socket=0;
-int u_socket=-1;
 
 void sig_handler(int sig) {
     printf("\nSIGINT received.\n");
@@ -2033,7 +2027,7 @@ int main (int argc, char **argv) {
      */
 
     /* create the listening socket and bind it */
-    l_socket = server_socket(settings.port, 0);
+    l_socket = server_socket(settings.port);
     if (l_socket == -1) {
         fprintf(stderr, "failed to listen\n");
         exit(1);
@@ -2103,16 +2097,11 @@ int main (int argc, char **argv) {
         exit(1);
     }
     /* create the initial listening connection */
-    if (!(l_conn = conn_new(l_socket, conn_listening, EV_READ | EV_PERSIST, 1, 0))) {
+    if (!(l_conn = conn_new(l_socket, conn_listening, EV_READ | EV_PERSIST, 1))) {
         fprintf(stderr, "failed to create listening connection");
         exit(1);
     }
-    /* create the initial listening udp connection */
-    if (u_socket > -1 &&
-        !(u_conn = conn_new(u_socket, conn_read, EV_READ | EV_PERSIST, UDP_READ_BUFFER_SIZE, 1))) {
-        fprintf(stderr, "failed to create udp connection");
-        exit(1);
-    }
+
     /* initialise clock event */
     clock_handler(0,0,0);
     /* initialise deletion array and timer event */
