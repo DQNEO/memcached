@@ -96,7 +96,7 @@ void stats_reset(void) {
 }
 
 void settings_init(void) {
-    settings.port = 11211;
+    settings.port = 11200;
     settings.interface.s_addr = htonl(INADDR_ANY);
     settings.maxbytes = 64*1024*1024; /* default is 64MB */
     settings.maxconns = 1024;         /* to limit connections-related memory to about 5MB */
