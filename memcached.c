@@ -1894,6 +1894,7 @@ void usage(void) {
     printf("-vv           very verbose (also print client commands/reponses)\n");
     printf("-h            print this help and exit\n");
     printf("-i            print memcached and libevent license\n");
+    printf("-V            print memcached and libevent license\n");
     printf("-b            run a managed instanced (mnemonic: buckets)\n");
     printf("-P <file>     save PID in <file>, only used with -d option\n");
     printf("-f <factor>   chunk size growth factor, default 1.25\n");
@@ -1998,7 +1999,7 @@ int main (int argc, char **argv) {
     setbuf(stderr, NULL);
 
     /* process arguments */
-    while ((c = getopt(argc, argv, "bp:s:U:m:Mc:khirvdl:u:P:f:s:")) != -1) {
+    while ((c = getopt(argc, argv, "bp:s:U:m:Mc:khirvdl:u:P:f:s:V")) != -1) {
         switch (c) {
         case 'U':
             settings.udpport = atoi(optarg);
@@ -2025,6 +2026,9 @@ int main (int argc, char **argv) {
             usage();
             exit(0);
         case 'i':
+            usage_license();
+            exit(0);
+        case 'V':
             usage_license();
             exit(0);
         case 'k':
