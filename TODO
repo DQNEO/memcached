@@ -18,4 +18,3 @@
 * calendar queue for early expirations of items, so they don't push
   out other objects with infinite expirations.
 
-* curr_items never decreases?  mailing list report.
