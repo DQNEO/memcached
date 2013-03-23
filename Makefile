@@ -37,7 +37,7 @@ bin_PROGRAMS = memcached$(EXEEXT) memcached-debug$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
-	$(top_srcdir)/configure AUTHORS COPYING ChangeLog INSTALL NEWS \
+	$(top_srcdir)/configure AUTHORS ChangeLog INSTALL  \
 	TODO config.guess config.sub daemon.c depcomp install-sh \
 	missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -751,11 +751,8 @@ uninstall-am: uninstall-binPROGRAMS
 test:	memcached-debug
 	prove t
 
-dist-hook:
-	rm -rf $(distdir)/doc/.svn/
-	rm -rf $(distdir)/scripts/.svn/
-	rm -rf $(distdir)/t/.svn/
-	rm -rf $(distdir)/t/lib/.svn/
+
+
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
