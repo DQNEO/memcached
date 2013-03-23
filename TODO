@@ -9,8 +9,6 @@
 
 * namespaces
 
-* refresh/touch command.
-
 * finer granularity of time for flush_all/delete, or generation number.
 
 * slab class reassignment still buggy and can crash.  once that's
