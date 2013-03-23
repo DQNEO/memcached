@@ -1900,7 +1900,7 @@ int main (int argc, char **argv) {
             }
             break;
         default:
-            fprintf(stderr, "Illegal argument \"%c\"\n", c);
+            fprintf(stderr, "Illegal argument \n");
             return 1;
         }
     }
