@@ -48,7 +48,6 @@ static int deltotal;
 #define TRANSMIT_SOFT_ERROR 2
 #define TRANSMIT_HARD_ERROR 3
 
-int *buckets = 0; /* bucket->generation array for a managed instance */
 
 #define REALTIME_MAXDELTA 60*60*24*30
 rel_time_t realtime(time_t exptime) {
@@ -229,8 +228,6 @@ conn *conn_new(int sfd, int init_state, int event_flags, int read_buffer_size
     c->write_and_go = conn_read;
     c->write_and_free = 0;
     c->item = 0;
-    c->bucket = -1;
-    c->gen = 0;
 
     event_set(&c->event, sfd, event_flags, event_handler, (void *)c);
     c->ev_flags = event_flags;
@@ -764,19 +761,6 @@ void process_command(conn *c, char *command) {
             return;
         }
 
-        if (settings.managed) {
-            int bucket = c->bucket;
-            if (bucket == -1) {
-                out_string(c, "CLIENT_ERROR no BG data in managed mode");
-                return;
-            }
-            c->bucket = -1;
-            if (buckets[bucket] != c->gen) {
-                out_string(c, "ERROR_NOT_OWNER");
-                return;
-            }
-        }
-
         expire = realtime(expire);
         it = item_alloc(key, flags, expire, len+2);
 
@@ -813,18 +797,7 @@ void process_command(conn *c, char *command) {
             out_string(c, "CLIENT_ERROR bad command line format");
             return;
         }
-        if (settings.managed) {
-            int bucket = c->bucket;
-            if (bucket == -1) {
-                out_string(c, "CLIENT_ERROR no BG data in managed mode");
-                return;
-            }
-            c->bucket = -1;
-            if (buckets[bucket] != c->gen) {
-                out_string(c, "ERROR_NOT_OWNER");
-                return;
-            }
-        }
+
         it = get_item(key);
         if (!it) {
             out_string(c, "NOT_FOUND");
@@ -874,19 +847,6 @@ void process_command(conn *c, char *command) {
     get:
         now = current_time;
         i = 0;
-
-        if (settings.managed) {
-            int bucket = c->bucket;
-            if (bucket == -1) {
-                out_string(c, "CLIENT_ERROR no BG data in managed mode");
-                return;
-            }
-            c->bucket = -1;
-            if (buckets[bucket] != c->gen) {
-                out_string(c, "ERROR_NOT_OWNER");
-                return;
-            }
-        }
 
         while(sscanf(start, " %250s%n", key, &next) >= 1) {
             start+=next;
@@ -944,18 +904,6 @@ void process_command(conn *c, char *command) {
         int res;
         time_t exptime = 0;
 
-        if (settings.managed) {
-            int bucket = c->bucket;
-            if (bucket == -1) {
-                out_string(c, "CLIENT_ERROR no BG data in managed mode");
-                return;
-            }
-            c->bucket = -1;
-            if (buckets[bucket] != c->gen) {
-                out_string(c, "ERROR_NOT_OWNER");
-                return;
-            }
-        }
         res = sscanf(command, "%*s %250s %ld", key, &exptime);
         it = get_item(key);
         if (!it) {
@@ -989,71 +937,6 @@ void process_command(conn *c, char *command) {
         todelete[delcurr++] = it;
         out_string(c, "DELETED");
         return;
-    }
-
-    if (strncmp(command, "own ", 4) == 0) {
-        int bucket, gen;
-        char *start = command+4;
-        if (!settings.managed) {
-            out_string(c, "CLIENT_ERROR not a managed instance");
-            return;
-        }
-        if (sscanf(start, "%u:%u\r\n", &bucket,&gen) == 2) {
-            if ((bucket < 0) || (bucket >= MAX_BUCKETS)) {
-                out_string(c, "CLIENT_ERROR bucket number out of range");
-                return;
-            }
-            buckets[bucket] = gen;
-            out_string(c, "OWNED");
-            return;
-        } else {
-            out_string(c, "CLIENT_ERROR bad format");
-            return;
-        }
-    }
-
-    if (strncmp(command, "disown ", 7) == 0) {
-        int bucket;
-        char *start = command+7;
-        if (!settings.managed) {
-            out_string(c, "CLIENT_ERROR not a managed instance");
-            return;
-        }
-        if (sscanf(start, "%u\r\n", &bucket) == 1) {
-            if ((bucket < 0) || (bucket >= MAX_BUCKETS)) {
-                out_string(c, "CLIENT_ERROR bucket number out of range");
-                return;
-            }
-            buckets[bucket] = 0;
-            out_string(c, "DISOWNED");
-            return;
-        } else {
-            out_string(c, "CLIENT_ERROR bad format");
-            return;
-        }
-    }
-
-    if (strncmp(command, "bg ", 3) == 0) {
-        int bucket, gen;
-        char *start = command+3;
-        if (!settings.managed) {
-            out_string(c, "CLIENT_ERROR not a managed instance");
-            return;
-        }
-        if (sscanf(start, "%u:%u\r\n", &bucket,&gen) == 2) {
-            /* we never write anything back, even if input's wrong */
-            if ((bucket < 0) || (bucket >= MAX_BUCKETS) || (gen<=0)) {
-                /* do nothing, bad input */
-            } else {
-                c->bucket = bucket;
-                c->gen = gen;
-            }
-            conn_set_state(c, conn_read);
-            return;
-        } else {
-            out_string(c, "CLIENT_ERROR bad format");
-            return;
-        }
     }
 
     if (strncmp(command, "stats", 5) == 0) {
@@ -1687,7 +1570,6 @@ void usage(void) {
     printf("-h            print this help and exit\n");
     printf("-i            print memcached and libevent license\n");
     printf("-V            print memcached and libevent license\n");
-    printf("-b            run a managed instanced (mnemonic: buckets)\n");
     printf("-P <file>     save PID in <file>, only used with -d option\n");
     printf("-n <bytes>    minimum space allocated for key+value+flags, default 48\n");
     return;
@@ -1758,7 +1640,6 @@ int main (int argc, char **argv) {
     settings.verbose = 0;
     settings.oldest_live = 0;
     settings.evict_to_free = 1;       /* push old items out of cache when memory runs out */
-    settings.managed = 0;
     settings.factor = 1.25;
     settings.chunk_size = 48;         /* space for a modest key and value */
 
@@ -1766,11 +1647,8 @@ int main (int argc, char **argv) {
     setbuf(stderr, NULL);
 
     /* process arguments */
-    while ((c = getopt(argc, argv, "bp:m:Mc:khVrvdu:P:s:V")) != -1) {
+    while ((c = getopt(argc, argv, "p:m:Mc:khVrvdu:P:s:V")) != -1) {
         switch (c) {
-        case 'b':
-            settings.managed = 1;
-            break;
         case 'p':
             settings.port = atoi(optarg);
             break;
@@ -1917,16 +1795,6 @@ int main (int argc, char **argv) {
     assoc_init();
     conn_init();
     slabs_init(settings.maxbytes, settings.factor);
-
-    /* managed instance? alloc and zero a bucket array */
-    if (settings.managed) {
-        buckets = malloc(sizeof(int)*MAX_BUCKETS);
-        if (buckets == 0) {
-            fprintf(stderr, "failed to allocate the bucket array");
-            exit(1);
-        }
-        memset(buckets, 0, sizeof(int)*MAX_BUCKETS);
-    }
 
     /* lock paged memory if needed */
     if (lock_memory) {

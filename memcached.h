@@ -47,7 +47,6 @@ struct settings {
     struct in_addr interface;
     int verbose;
     rel_time_t oldest_live; /* ignore existing items older than this */
-    int managed;          /* if 1, a tracker manages virtual buckets */
     int evict_to_free;
     double factor;          /* chunk size growth factor */
     int chunk_size;
@@ -161,13 +160,7 @@ typedef struct {
     int    hdrsize;   /* number of headers' worth of space is allocated */
 
     int    binary;    /* are we in binary mode */
-    int    bucket;    /* bucket number for the next command, if running as
-                         a managed instance. -1 (_not_ 0) means invalid. */
-    int    gen;       /* generation requested for the bucket */
 } conn;
-
-/* number of virtual buckets for a managed instance */
-#define MAX_BUCKETS 32768
 
 /* listening socket */
 extern int l_socket;
