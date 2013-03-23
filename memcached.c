@@ -1162,40 +1162,6 @@ int try_read_command(conn *c) {
 }
 
 /*
- * read a UDP request.
- * return 0 if there's nothing to read.
- */
-int try_read_udp(conn *c) {
-    int res;
-
-    c->request_addr_size = sizeof(c->request_addr);
-    res = recvfrom(c->sfd, c->rbuf, c->rsize,
-                   0, &c->request_addr, &c->request_addr_size);
-    if (res > 8) {
-        unsigned char *buf = (unsigned char *)c->rbuf;
-        stats.bytes_read += res;
-
-        /* Beginning of UDP packet is the request ID; save it. */
-        c->request_id = buf[0] * 256 + buf[1];
-
-        /* If this is a multi-packet request, drop it. */
-        if (buf[4] != 0 || buf[5] != 1) {
-            out_string(c, "SERVER_ERROR multi-packet request not supported");
-            return 0;
-        }
-
-        /* Don't care about any of the rest of the header. */
-        res -= 8;
-        memmove(c->rbuf, c->rbuf + 8, res);
-
-        c->rbytes += res;
-        c->rcurr = c->rbuf;
-        return 1;
-    }
-    return 0;
-}
-
-/*
  * read from network as much as we can, handle buffer overflow and connection
  * close.
  * before reading, move the remaining incomplete fragment of a command
