@@ -9,8 +9,6 @@
 
 * namespaces
 
-* binary get protocol
-
 * refresh/touch command.
 
 * finer granularity of time for flush_all/delete, or generation number.
