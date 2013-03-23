@@ -1907,7 +1907,8 @@ int l_socket=0;
 int u_socket=-1;
 
 void sig_handler(int sig) {
-    printf("SIGINT handled.\n");
+    printf("\nSIGINT received.\n");
+    printf("bye.\n");
     exit(0);
 }
 
