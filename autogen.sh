@@ -8,18 +8,14 @@
 #
 
 echo "aclocal..."
-ACLOCAL=aclocal-1.7
-$ACLOCAL || aclocal-1.5 || aclocal || exit 1
+aclocal || exit 1
 
 echo "autoheader..."
-AUTOHEADER=autoheader
-$AUTOHEADER || exit 1
+autoheader || exit 1
 
 echo "automake..."
-AUTOMAKE=automake-1.7
-$AUTOMAKE --foreign --add-missing || automake --gnu --add-missing || exit 1
+automake --gnu --add-missing || exit 1
 
 echo "autoconf..."
-AUTOCONF=autoconf
-$AUTOCONF || exit 1
+autoconf || exit 1
 
