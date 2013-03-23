@@ -1959,9 +1959,6 @@ int main (int argc, char **argv) {
         case 'h':
             usage();
             exit(0);
-        case 'i':
-            usage_license();
-            exit(0);
         case 'V':
             usage_license();
             exit(0);
