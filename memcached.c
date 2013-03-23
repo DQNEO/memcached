@@ -1743,7 +1743,6 @@ void usage(void) {
     printf(PACKAGE " " VERSION "\n");
     printf("-p <num>      port number to listen on\n");
     printf("-s <file>     unix socket path to listen on (disables network support)\n");
-    printf("-l <ip_addr>  interface to listen on, default is INDRR_ANY\n");
     printf("-d            run as a daemon\n");
     printf("-r            maximize core file limit\n");
     printf("-u <username> assume identity of <username> (only when run as root)\n");
@@ -1836,7 +1835,7 @@ int main (int argc, char **argv) {
     setbuf(stderr, NULL);
 
     /* process arguments */
-    while ((c = getopt(argc, argv, "bp:m:Mc:khVrvdl:u:P:f:s:V")) != -1) {
+    while ((c = getopt(argc, argv, "bp:m:Mc:khVrvdu:P:f:s:V")) != -1) {
         switch (c) {
         case 'b':
             settings.managed = 1;
@@ -1864,14 +1863,6 @@ int main (int argc, char **argv) {
             break;
         case 'v':
             settings.verbose++;
-            break;
-        case 'l':
-            if (!inet_pton(AF_INET, optarg, &addr)) {
-                fprintf(stderr, "Illegal address: %s\n", optarg);
-                return 1;
-            } else {
-                settings.interface = addr;
-            }
             break;
         case 'd':
             daemonize = 1;
