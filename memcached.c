@@ -2090,11 +2090,7 @@ int main (int argc, char **argv) {
 
     /* lock paged memory if needed */
     if (lock_memory) {
-#ifdef HAVE_MLOCKALL
         mlockall(MCL_CURRENT | MCL_FUTURE);
-#else
-        fprintf(stderr, "warning: mlockall() not supported on this platform.  proceeding without.\n");
-#endif
     }
 
     /*
