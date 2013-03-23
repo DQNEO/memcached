@@ -72,9 +72,7 @@ sub free_port {
 }
 
 sub supports_udp {
-    my $output = `$Bin/../memcached-debug -h`;
-    return 0 if $output =~ /^memcached 1\.1\./;
-    return 1;
+    return 0;
 }
 
 sub new_memcached {

@@ -44,7 +44,6 @@ struct settings {
     size_t maxbytes;
     int maxconns;
     int port;
-    int udpport;
     struct in_addr interface;
     int verbose;
     rel_time_t oldest_live; /* ignore existing items older than this */
@@ -156,7 +155,6 @@ typedef struct {
     int    ileft;
 
     /* data for UDP clients */
-    int    udp;       /* 1 if this is a UDP "connection" */
     int    request_id; /* Incoming UDP request ID, if this is a UDP "connection" */
     struct sockaddr request_addr; /* Who sent the most recent request */
     socklen_t request_addr_size;

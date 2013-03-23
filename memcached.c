@@ -97,7 +97,6 @@ void stats_reset(void) {
 
 void settings_init(void) {
     settings.port = 11211;
-    settings.udpport = 0;
     settings.interface.s_addr = htonl(INADDR_ANY);
     settings.maxbytes = 64*1024*1024; /* default is 64MB */
     settings.maxconns = 1024;         /* to limit connections-related memory to about 5MB */
@@ -176,11 +175,6 @@ int add_msghdr(conn *c)
     c->msgbytes = 0;
     c->msgused++;
 
-    if (c->udp) {
-        /* Leave room for the UDP header, which we'll fill in later. */
-        return add_iov(c, NULL, UDP_HEADER_SIZE);
-    }
-
     return 0;
 }
 
@@ -251,7 +245,6 @@ conn *conn_new(int sfd, int init_state, int event_flags, int read_buffer_size,
     }
 
     c->sfd = sfd;
-    c->udp = is_udp;
     c->state = init_state;
     c->rlbytes = 0;
     c->rbytes = c->wbytes = 0;
@@ -389,8 +382,6 @@ int do_realloc(void **orig, int newsize, int bytes_per_item, int *size) {
  * buffers!
  */
 void conn_shrink(conn *c) {
-    if (c->udp)
-        return;
 
     if (c->rsize > READ_BUFFER_HIGHWAT && c->rbytes < DATA_BUFFER_SIZE) {
        do_realloc((void **)&c->rbuf, DATA_BUFFER_SIZE, 1, &c->rsize);
@@ -471,7 +462,7 @@ int add_iov(conn *c, const void *buf, int len) {
          * Limit UDP packets, and the first payloads of TCP replies, to
          * UDP_MAX_PAYLOAD_SIZE bytes.
          */
-        limit_to_mtu = c->udp || (1 == c->msgused);
+        limit_to_mtu = (1 == c->msgused);
 
         /* We may need to start a new msghdr if this one is full. */
         if (m->msg_iovlen == IOV_MAX ||
@@ -1004,13 +995,8 @@ void process_command(conn *c, char *command) {
             fprintf(stderr, ">%d END\n", c->sfd);
         add_iov(c, "END\r\n", 5);
 
-        if (c->udp && build_udp_headers(c)) {
-            out_string(c, "SERVER_ERROR out of memory");
-        }
-        else {
-            conn_set_state(c, conn_mwrite);
-            c->msgcurr = 0;
-        }
+        conn_set_state(c, conn_mwrite);
+        c->msgcurr = 0;
         return;
     }
 
@@ -1382,10 +1368,7 @@ int transmit(conn *c) {
         if (settings.verbose > 0)
             perror("Failed to write, and not due to blocking");
 
-        if (c->udp)
-            conn_set_state(c, conn_read);
-        else
-            conn_set_state(c, conn_closing);
+        conn_set_state(c, conn_closing);
         return TRANSMIT_HARD_ERROR;
     } else {
         return TRANSMIT_COMPLETE;
@@ -1435,7 +1418,7 @@ void drive_machine(conn *c) {
             if (try_read_command(c)) {
                 continue;
             }
-            if (c->udp ? try_read_udp(c) : try_read_network(c)) {
+            if (try_read_network(c)) {
                 continue;
             }
             /* we have no command line and no data to read from network */
@@ -1544,7 +1527,7 @@ void drive_machine(conn *c) {
              */
             if (c->iovused == 0) {
                 if (add_iov(c, c->wcurr, c->wbytes) ||
-                        c->udp && build_udp_headers(c)) {
+                        0 && build_udp_headers(c)) {
                     if (settings.verbose > 0)
                         fprintf(stderr, "Couldn't build response\n");
                     conn_set_state(c, conn_closing);
@@ -1590,10 +1573,7 @@ void drive_machine(conn *c) {
             break;
 
         case conn_closing:
-            if (c->udp)
-                conn_cleanup(c);
-            else
-                conn_close(c);
+            conn_close(c);
             exit = 1;
             break;
         }
@@ -1987,11 +1967,8 @@ int main (int argc, char **argv) {
     setbuf(stderr, NULL);
 
     /* process arguments */
-    while ((c = getopt(argc, argv, "bp:s:U:m:Mc:khirvdl:u:P:f:s:V")) != -1) {
+    while ((c = getopt(argc, argv, "bp:s:m:Mc:khVrvdl:u:P:f:s:V")) != -1) {
         switch (c) {
-        case 'U':
-            settings.udpport = atoi(optarg);
-            break;
         case 'b':
             settings.managed = 1;
             break;
@@ -2124,15 +2101,6 @@ int main (int argc, char **argv) {
         l_socket = server_socket(settings.port, 0);
         if (l_socket == -1) {
             fprintf(stderr, "failed to listen\n");
-            exit(1);
-        }
-    }
-
-    if (settings.udpport > 0 && ! settings.socketpath) {
-        /* create the UDP listening socket and bind it */
-        u_socket = server_socket(settings.udpport, 1);
-        if (u_socket == -1) {
-            fprintf(stderr, "failed to listen on UDP port %d\n", settings.udpport);
             exit(1);
         }
     }
