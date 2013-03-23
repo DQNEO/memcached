@@ -1745,7 +1745,6 @@ int server_socket_unix(char *path) {
 void pre_gdb () {
     int i = 0;
     if(l_socket) close(l_socket);
-    if(u_socket > -1) close(u_socket);
     for (i=3; i<=500; i++) close(i); /* so lame */
     kill(getpid(), SIGABRT);
 }
