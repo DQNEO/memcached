@@ -18,4 +18,5 @@ install-sh
 missing
 stamp-h1
 memcached-debug
+memcached
 *.o
