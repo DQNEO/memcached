@@ -1756,7 +1756,6 @@ void usage(void) {
     printf("-V            print memcached and libevent license\n");
     printf("-b            run a managed instanced (mnemonic: buckets)\n");
     printf("-P <file>     save PID in <file>, only used with -d option\n");
-    printf("-f <factor>   chunk size growth factor, default 1.25\n");
     printf("-n <bytes>    minimum space allocated for key+value+flags, default 48\n");
     return;
 }
@@ -1834,7 +1833,7 @@ int main (int argc, char **argv) {
     setbuf(stderr, NULL);
 
     /* process arguments */
-    while ((c = getopt(argc, argv, "bp:m:Mc:khVrvdu:P:f:s:V")) != -1) {
+    while ((c = getopt(argc, argv, "bp:m:Mc:khVrvdu:P:s:V")) != -1) {
         switch (c) {
         case 'b':
             settings.managed = 1;
@@ -1874,13 +1873,6 @@ int main (int argc, char **argv) {
             break;
         case 'P':
             pid_file = optarg;
-            break;
-        case 'f':
-            settings.factor = atof(optarg);
-            if (settings.factor <= 1.0) {
-                fprintf(stderr, "Factor must be greater than 1\n");
-                return 1;
-            }
             break;
         case 'n':
             settings.chunk_size = atoi(optarg);
