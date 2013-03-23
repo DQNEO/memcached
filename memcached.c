@@ -88,7 +88,6 @@ void settings_init(void) {
     settings.verbose = 0;
     settings.oldest_live = 0;
     settings.evict_to_free = 1;       /* push old items out of cache when memory runs out */
-    settings.socketpath = NULL;       /* by default, not using a unix socket */
     settings.managed = 0;
     settings.factor = 1.25;
     settings.chunk_size = 48;         /* space for a modest key and value */
@@ -1259,14 +1258,7 @@ int try_read_network(conn *c) {
             c->rsize *= 2;
         }
 
-        /* unix socket mode doesn't need this, so zeroed out.  but why
-         * is this done for every command?  presumably for UDP
-         * mode.  */
-        if (!settings.socketpath) {
-            c->request_addr_size = sizeof(c->request_addr);
-        } else {
-            c->request_addr_size = 0;
-        }
+        c->request_addr_size = sizeof(c->request_addr);
 
         res = read(c->sfd, c->rbuf + c->rbytes, c->rsize - c->rbytes);
         if (res > 0) {
@@ -1919,16 +1911,13 @@ int main (int argc, char **argv) {
     setbuf(stderr, NULL);
 
     /* process arguments */
-    while ((c = getopt(argc, argv, "bp:s:m:Mc:khVrvdl:u:P:f:s:V")) != -1) {
+    while ((c = getopt(argc, argv, "bp:m:Mc:khVrvdl:u:P:f:s:V")) != -1) {
         switch (c) {
         case 'b':
             settings.managed = 1;
             break;
         case 'p':
             settings.port = atoi(optarg);
-            break;
-        case 's':
-            settings.socketpath = optarg;
             break;
         case 'm':
             settings.maxbytes = ((size_t)atoi(optarg))*1024*1024;
@@ -2046,13 +2035,12 @@ int main (int argc, char **argv) {
      */
 
     /* create the listening socket and bind it */
-    if (!settings.socketpath) {
-        l_socket = server_socket(settings.port, 0);
-        if (l_socket == -1) {
-            fprintf(stderr, "failed to listen\n");
-            exit(1);
-        }
+    l_socket = server_socket(settings.port, 0);
+    if (l_socket == -1) {
+        fprintf(stderr, "failed to listen\n");
+        exit(1);
     }
+
 
     /* lose root privileges if we have them */
     if (getuid()== 0 || geteuid()==0) {
@@ -2067,15 +2055,6 @@ int main (int argc, char **argv) {
         if (setgid(pw->pw_gid)<0 || setuid(pw->pw_uid)<0) {
             fprintf(stderr, "failed to assume identity of user %s\n", username);
             return 1;
-        }
-    }
-
-    /* create unix mode sockets after dropping privileges */
-    if (settings.socketpath) {
-        l_socket = server_socket_unix(settings.socketpath);
-        if (l_socket == -1) {
-            fprintf(stderr, "failed to listen\n");
-            exit(1);
         }
     }
 
