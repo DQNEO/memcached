@@ -19,5 +19,3 @@
   out other objects with infinite expirations.
 
 * curr_items never decreases?  mailing list report.
-
-* memcached to listen on more than one IP.  mailing list request.
