@@ -2,18 +2,6 @@
 /*
  *  memcached - memory caching daemon
  *
- *       http://www.danga.com/memcached/
- *
- *  Copyright 2003 Danga Interactive, Inc.  All rights reserved.
- *
- *  Use and distribution licensed under the BSD license.  See
- *  the LICENSE file for full text.
- *
- *  Authors:
- *      Anatoly Vorobey <mellon@pobox.com>
- *      Brad Fitzpatrick <brad@danga.com>
- *
- *  $Id$
  */
 #include "config.h"
 #include <sys/types.h>
