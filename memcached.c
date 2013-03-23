@@ -1742,7 +1742,6 @@ void delete_handler(int fd, short which, void *arg) {
 void usage(void) {
     printf(PACKAGE " " VERSION "\n");
     printf("-p <num>      port number to listen on\n");
-    printf("-s <file>     unix socket path to listen on (disables network support)\n");
     printf("-d            run as a daemon\n");
     printf("-r            maximize core file limit\n");
     printf("-u <username> assume identity of <username> (only when run as root)\n");
