@@ -1845,9 +1845,8 @@ void usage(void) {
     return;
 }
 
-void usage_license(void) {
+void usage_version(void) {
     printf(PACKAGE " " VERSION "\n\n");
-    printf("see LISCENSE file for details.\n");
     return;
 }
 
@@ -1932,7 +1931,7 @@ int main (int argc, char **argv) {
             usage();
             exit(0);
         case 'V':
-            usage_license();
+            usage_version();
             exit(0);
         case 'k':
             lock_memory = 1;
