@@ -80,19 +80,6 @@ void stats_reset(void) {
     stats.bytes_read = stats.bytes_written = 0;
 }
 
-void settings_init(void) {
-    settings.port = 11200;
-    settings.interface.s_addr = htonl(INADDR_ANY);
-    settings.maxbytes = 64*1024*1024; /* default is 64MB */
-    settings.maxconns = 1024;         /* to limit connections-related memory to about 5MB */
-    settings.verbose = 0;
-    settings.oldest_live = 0;
-    settings.evict_to_free = 1;       /* push old items out of cache when memory runs out */
-    settings.managed = 0;
-    settings.factor = 1.25;
-    settings.chunk_size = 48;         /* space for a modest key and value */
-}
-
 /* returns true if a deleted item's delete-locked-time is over, and it
    should be removed from the namespace */
 int item_delete_lock_over (item *it) {
@@ -1834,7 +1821,16 @@ int main (int argc, char **argv) {
     signal(SIGINT, sig_handler);
 
     /* init settings */
-    settings_init();
+    settings.port = 11200;
+    settings.interface.s_addr = htonl(INADDR_ANY);
+    settings.maxbytes = 64*1024*1024; /* default is 64MB */
+    settings.maxconns = 1024;         /* to limit connections-related memory to about 5MB */
+    settings.verbose = 0;
+    settings.oldest_live = 0;
+    settings.evict_to_free = 1;       /* push old items out of cache when memory runs out */
+    settings.managed = 0;
+    settings.factor = 1.25;
+    settings.chunk_size = 48;         /* space for a modest key and value */
 
     /* set stderr non-buffering (for running under, say, daemontools) */
     setbuf(stderr, NULL);

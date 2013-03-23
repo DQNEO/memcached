@@ -245,8 +245,7 @@ int add_msghdr(conn *c);
 /* stats */
 void stats_reset(void);
 void stats_init(void);
-/* defaults */
-void settings_init(void);
+
 /* associative array */
 void assoc_init(void);
 item *assoc_find(char *key);
