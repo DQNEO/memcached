@@ -13,11 +13,6 @@
 #include <sys/resource.h>
 #include <sys/uio.h>
 
-/* some POSIX systems need the following definition
- * to get mlockall flags out of sys/mman.h.  */
-#ifndef _P1003_1B_VISIBLE
-#define _P1003_1B_VISIBLE
-#endif
 /* need this to get IOV_MAX on some platforms. */
 #ifndef __need_IOV_MAX
 #define __need_IOV_MAX
@@ -35,12 +30,9 @@
 #include <errno.h>
 #include <time.h>
 #include <event.h>
+#include <malloc.h>
 #include <assert.h>
 #include <limits.h>
-
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
 
 /* FreeBSD 4.x doesn't have IOV_MAX exposed. */
 #ifndef IOV_MAX
@@ -661,7 +653,6 @@ void process_stat(conn *c, char *command) {
         return;
     }
 
-#ifdef HAVE_MALLOC_H
 #ifdef HAVE_STRUCT_MALLINFO
     if (strcmp(command, "stats malloc") == 0) {
         char temp[512];
@@ -683,7 +674,6 @@ void process_stat(conn *c, char *command) {
         return;
     }
 #endif /* HAVE_STRUCT_MALLINFO */
-#endif /* HAVE_MALLOC_H */
 
     if (strcmp(command, "stats maps") == 0) {
         char *wbuf;
