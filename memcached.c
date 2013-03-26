@@ -1239,6 +1239,7 @@ void drive_machine(conn *c) {
                 break;
             }
 
+            // socketからデータ本体を読み込む
             /*  now try reading from the socket */
             res = read(c->sfd, c->ritem, c->rlbytes);
             if (res > 0) {
