@@ -1240,6 +1240,8 @@ void drive_machine(conn *c) {
             }
 
             // socketからデータ本体を読み込む
+            // データはc->ritemに一時保存される。
+            // 
             /*  now try reading from the socket */
             res = read(c->sfd, c->ritem, c->rlbytes);
             if (res > 0) {
