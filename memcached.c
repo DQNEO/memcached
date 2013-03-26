@@ -367,6 +367,8 @@ void conn_shrink(conn *c) {
 }
 
 /*
+ * 現在のステータスをセットする
+ * 
  * Sets a connection's current state in the state machine. Any special
  * processing that needs to happen on certain state transitions can
  * happen here.
