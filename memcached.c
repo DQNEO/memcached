@@ -1204,8 +1204,6 @@ void drive_machine(conn *c) {
 
 
         case conn_read:
-            // setでvalueの読み込みが完了したとき
-
             if (try_read_command(c)) {
                 continue;
             }
@@ -1223,6 +1221,8 @@ void drive_machine(conn *c) {
             break;
 
         case conn_nread:
+            // setでvalueの読み込みが完了したとき
+
             /* we are reading rlbytes into ritem; */
             if (c->rlbytes == 0) {
                 complete_nread(c);
