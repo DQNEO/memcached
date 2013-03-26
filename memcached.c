@@ -1157,6 +1157,12 @@ int transmit(conn *c) {
     }
 }
 
+/*
+ * イベントハンドラの実体
+ * イベントが発生するたびにここが呼ばれる。
+ *
+ * 
+ */
 void drive_machine(conn *c) {
 
     int exit = 0;
@@ -1196,7 +1202,10 @@ void drive_machine(conn *c) {
 
             break;
 
+
         case conn_read:
+            // setでvalueの読み込みが完了したとき
+
             if (try_read_command(c)) {
                 continue;
             }
